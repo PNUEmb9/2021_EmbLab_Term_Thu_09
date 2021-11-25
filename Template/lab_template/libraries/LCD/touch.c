@@ -255,7 +255,7 @@ void Touch_Configuration()
 	GPIO_Init(GPIOC, &GPIO_InitStructure);
 }
 
-void Draw_Touch_Point(u16 x, u16 y)
+void Drow_Touch_Point(u16 x, u16 y)
 {
 	LCD_DrawLine(x - 12, y, x + 13, y);
 	LCD_DrawLine(x, y - 12, x, y + 13);
@@ -314,23 +314,23 @@ void Touch_Adjust(void)
 			Refreshes_Screen();
 			if (i == 0)
 			{
-				Draw_Touch_Point(20, 20);
+				Drow_Touch_Point(20, 20);
 				Touch_GetXY(&pos_temp[0][0], &pos_temp[0][1], 1);
 			}
 			else if (i == 1)
 			{
-				Draw_Touch_Point(220, 20);
+				Drow_Touch_Point(220, 20);
 				Touch_GetXY(&pos_temp[1][0], &pos_temp[1][1], 1);
 			}
 			else if (i == 2)
 			{
-				Draw_Touch_Point(20, 300);
+				Drow_Touch_Point(20, 300);
 				Touch_GetXY(&pos_temp[2][0], &pos_temp[2][1], 1);
 			}
 			else
 			{
 
-				Draw_Touch_Point(220, 300);
+				Drow_Touch_Point(220, 300);
 				Touch_GetXY(&pos_temp[3][0], &pos_temp[3][1], 1);
 			}
 		}
