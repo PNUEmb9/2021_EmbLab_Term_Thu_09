@@ -25,7 +25,7 @@ if not "%~1" == "" goto debugFile
 
 @echo on 
 
-"C:\Program Files\IAR Systems\Embedded Workbench 9.0_2\common\bin\cspybat" -f "C:\Users\jaehe\2021_2_EmbLecture\Base\Template\trial_template\settings\trial_template.Debug.general.xcl" --backend -f "C:\Users\jaehe\2021_2_EmbLecture\Base\Template\trial_template\settings\trial_template.Debug.driver.xcl" 
+"C:\Program Files\IAR Systems\Embedded Workbench 9.0\common\bin\cspybat" -f "D:\SchoolExp\2021_EmbLab_Term_Thu_09\trial_template\settings\trial_template.Debug.general.xcl" --backend -f "D:\SchoolExp\2021_EmbLab_Term_Thu_09\trial_template\settings\trial_template.Debug.driver.xcl" 
 
 @echo off 
 goto end 
@@ -34,7 +34,7 @@ goto end
 
 @echo on 
 
-"C:\Program Files\IAR Systems\Embedded Workbench 9.0_2\common\bin\cspybat" -f "C:\Users\jaehe\2021_2_EmbLecture\Base\Template\trial_template\settings\trial_template.Debug.general.xcl" "--debug_file=%~1" --backend -f "C:\Users\jaehe\2021_2_EmbLecture\Base\Template\trial_template\settings\trial_template.Debug.driver.xcl" 
+"C:\Program Files\IAR Systems\Embedded Workbench 9.0\common\bin\cspybat" -f "D:\SchoolExp\2021_EmbLab_Term_Thu_09\trial_template\settings\trial_template.Debug.general.xcl" "--debug_file=%~1" --backend -f "D:\SchoolExp\2021_EmbLab_Term_Thu_09\trial_template\settings\trial_template.Debug.driver.xcl" 
 
 @echo off 
 :end
