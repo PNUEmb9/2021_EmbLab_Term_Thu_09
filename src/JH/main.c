@@ -52,24 +52,6 @@ void RCC_Configure(void) // stm32f10x_rcc.h 참고
 	RCC_APB2PeriphClockCmd(RCC_APB2Periph_AFIO, ENABLE);
 }
 
-void DMA_Configure(void) {
-    DMA_InitTypeDef DMA_InitStructure;
-    DMA_DeInit(DMA2_Channel1);
-    DMA_InitStructure.DMA_PeripheralBaseAddr =(uint32_t) &(GPIOD->IDR);
-    DMA_InitStructure.DMA_MemoryBaseAddr = (uint32_t) &touch[0];
-    DMA_InitStructure.DMA_DIR = DMA_DIR_PeripheralSRC;
-    DMA_InitStructure.DMA_BufferSize = 4;
-    DMA_InitStructure.DMA_PeripheralInc = DMA_PeripheralInc_Disable;
-    DMA_InitStructure.DMA_MemoryInc = DMA_MemoryInc_Disable;
-    DMA_InitStructure.DMA_PeripheralDataSize = DMA_PeripheralDataSize_HalfWord;
-    DMA_InitStructure.DMA_MemoryDataSize = DMA_MemoryDataSize_HalfWord;
-    DMA_InitStructure.DMA_Mode = DMA_Mode_Circular;
-    DMA_InitStructure.DMA_Priority = DMA_Priority_High;
-    DMA_InitStructure.DMA_M2M = DMA_M2M_Disable;
-    DMA_Init(DMA1_Channel2, &DMA_InitStructure);
-    DMA_Cmd(DMA1_Channel2, ENABLE);
-}
-
 void GPIO_Configure(void) // stm32f10x_gpio.h 참고
 {
     GPIO_InitTypeDef GPIO_InitStructure;
@@ -170,12 +152,12 @@ void NVIC_Configure(void) { // misc.h 참고
 void TIM2_IRQHandler(void) {
     if(TIM_GetITStatus(TIM2, TIM_IT_Update) != RESET) {
         if (GPIO_ReadInputDataBit(GPIOD, GPIO_Pin_3) == Bit_RESET) {
-            if(!boundaryFlag) {
-                changeBrightness();                
-                // printf("%d\t%d\n", ledBrightness, ledDimDir);
-            } else {
-                // printf("%d\tboundary\n", ledBrightness);
-            }
+            // if(!boundaryFlag) {
+            //     changeBrightness();                
+            //     // printf("%d\t%d\n", ledBrightness, ledDimDir);
+            // } else {
+            //     // printf("%d\tboundary\n", ledBrightness);
+            // }
 		}
         TIM_ClearITPendingBit(TIM2,TIM_IT_Update);
     }
@@ -185,10 +167,20 @@ void TIM2_IRQHandler(void) {
 void EXTI3_IRQHandler(void) {
     if (EXTI_GetITStatus(EXTI_Line3) != RESET) {
 		if (GPIO_ReadInputDataBit(GPIOD, GPIO_Pin_3) == Bit_RESET) {
-            ledDimDir = (!boundaryFlag)*(-ledDimDir)+(boundaryFlag)*((!!(maxBrightness-ledBrightness))*2-1);
-            boundaryFlag = 0;
+            // ledDimDir = (!boundaryFlag)*(-ledDimDir)+(boundaryFlag)*((!!(maxBrightness-ledBrightness))*2-1);
+            // boundaryFlag = 0;
+            TIM_Cmd(TIM3, DISABLE);
+            GPIO_ResetBits(GPIOD,GPIO_Pin_3);
 		} else {
-            printf("brightness: %d\%\n", (int)((float)(ledBrightness-sysMinBrightness)/(float)(sysMaxBrightness-sysMinBrightness)*100));
+            // printf("brightness: %d\%\n", (int)((float)(ledBrightness-sysMinBrightness)/(float)(sysMaxBrightness-sysMinBrightness)*100));
+            TIM_OCInitStructure.TIM_OCMode = TIM_OCMode_PWM1;
+            TIM_OCInitStructure.TIM_OCPolarity = TIM_OCPolarity_High;
+            TIM_OCInitStructure.TIM_OutputState = TIM_OutputState_Enable;
+            TIM_OCInitStructure.TIM_Pulse = ledBrightness; // us
+            TIM_OC3Init(TIM3, &TIM_OCInitStructure);
+            TIM_OC3PreloadConfig(TIM3, TIM_OCPreload_Enable);
+            TIM_ARRPreloadConfig(TIM3, ENABLE);
+            TIM_Cmd(TIM3, ENABLE);
         }
         EXTI_ClearITPendingBit(EXTI_Line3);
 	}
