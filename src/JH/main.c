@@ -20,7 +20,12 @@ void TIM2_IRQHandler(void);
 
 void changeBrightness(void);
 uint16_t prescale;
+uint16_t pwmPulse = 1000;
+uint16_t sysMaxBrightness = 1000;
+uint16_t sysMinBrightness = 0;
 uint16_t ledBrightness = 500;
+uint16_t minBrightness = 100;
+uint16_t maxBrightness = 1000;
 int8_t ledDimDir = 1;
 uint8_t boundaryFlag = 0;
 int16_t color[12] = {WHITE, CYAN, BLUE, RED, MAGENTA, LGRAY, GREEN, YELLOW, BROWN, BRRED, GRAY};
@@ -115,8 +120,8 @@ void EXTI_Configure(void) // stm32f10x_gpio.h 참고
 }
 
 void TIM_Configure(void) {
-    TIM_TimeBaseStructure.TIM_Period = 2000-1;         
     TIM_TimeBaseStructure.TIM_Prescaler = (uint16_t) (SystemCoreClock / 1000000) - 1;
+    TIM_TimeBaseStructure.TIM_Period = 2000-1;         
     TIM_TimeBaseStructure.TIM_ClockDivision = TIM_CKD_DIV1;
     TIM_TimeBaseStructure.TIM_CounterMode = TIM_CounterMode_Down;
     TIM_TimeBaseStructure.TIM_RepetitionCounter = 0;
@@ -134,7 +139,7 @@ void TIM_Configure(void) {
     TIM_OCInitStructure.TIM_OutputState = TIM_OutputState_Enable;
     TIM_OCInitStructure.TIM_Pulse = ledBrightness; // us
     TIM_OC3Init(TIM3, &TIM_OCInitStructure);
-    TIM_OC3PreloadConfig(TIM3, TIM_OCPreload_Disable);
+    TIM_OC3PreloadConfig(TIM3, TIM_OCPreload_Enable);
     TIM_ARRPreloadConfig(TIM3, ENABLE);
 
     TIM_ITConfig(TIM2, TIM_IT_Update, ENABLE);
@@ -167,7 +172,9 @@ void TIM2_IRQHandler(void) {
         if (GPIO_ReadInputDataBit(GPIOD, GPIO_Pin_3) == Bit_RESET) {
             if(!boundaryFlag) {
                 changeBrightness();                
+                // printf("%d\t%d\n", ledBrightness, ledDimDir);
             } else {
+                // printf("%d\tboundary\n", ledBrightness);
             }
 		}
         TIM_ClearITPendingBit(TIM2,TIM_IT_Update);
@@ -178,10 +185,10 @@ void TIM2_IRQHandler(void) {
 void EXTI3_IRQHandler(void) {
     if (EXTI_GetITStatus(EXTI_Line3) != RESET) {
 		if (GPIO_ReadInputDataBit(GPIOD, GPIO_Pin_3) == Bit_RESET) {
-            ledDimDir = (!boundaryFlag)*(-ledDimDir)+(boundaryFlag)*((!!(1000-ledBrightness))*2-1);
+            ledDimDir = (!boundaryFlag)*(-ledDimDir)+(boundaryFlag)*((!!(maxBrightness-ledBrightness))*2-1);
             boundaryFlag = 0;
 		} else {
-            printf("brightness: %d\%\n", ledBrightness/10);
+            printf("brightness: %d\%\n", (int)((float)(ledBrightness-sysMinBrightness)/(float)(sysMaxBrightness-sysMinBrightness)*100));
         }
         EXTI_ClearITPendingBit(EXTI_Line3);
 	}
@@ -189,8 +196,12 @@ void EXTI3_IRQHandler(void) {
 
 void changeBrightness(void)
 {
-    ledBrightness = (ledBrightness+1*ledDimDir)%1001;
-    boundaryFlag = !(ledBrightness%1000);
+    ledBrightness = (ledBrightness+1*ledDimDir);
+    boundaryFlag = !((ledBrightness - minBrightness) % (maxBrightness-minBrightness));
+
+    TIM_OCInitStructure.TIM_OCMode = TIM_OCMode_PWM1;
+    TIM_OCInitStructure.TIM_OCPolarity = TIM_OCPolarity_High;
+    TIM_OCInitStructure.TIM_OutputState = TIM_OutputState_Enable;
     TIM_OCInitStructure.TIM_Pulse = ledBrightness;
     TIM_OC3Init(TIM3, &TIM_OCInitStructure);
 }
