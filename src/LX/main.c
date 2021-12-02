@@ -106,7 +106,7 @@ void EXTI_Configure(void) // stm32f10x_gpio.h 참고
     GPIO_EXTILineConfig(GPIO_PortSourceGPIOD, GPIO_PinSource7);
     EXTI_InitStructure.EXTI_Line = EXTI_Line7;
     EXTI_InitStructure.EXTI_Mode = EXTI_Mode_Interrupt;
-    EXTI_InitStructure.EXTI_Trigger = EXTI_Trigger_Falling;
+    EXTI_InitStructure.EXTI_Trigger = EXTI_Trigger_Rising_Falling;
     EXTI_InitStructure.EXTI_LineCmd = ENABLE;
     EXTI_Init(&EXTI_InitStructure);
 	
@@ -220,6 +220,7 @@ void EXTI3_IRQHandler(void) {
 	}
 }
 
+// Sound sensor singal recognition
 void EXIT9_5_IRQHandler(void) {
     if (EXTI_GetITStatus(EXIT_Line7) != RESET) {
         if (GPIO_ReadInputDataBit(GPIOD, GPIO_Pin_7) == Bit_RESET) {
