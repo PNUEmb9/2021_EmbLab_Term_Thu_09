@@ -103,12 +103,12 @@ void EXTI_Configure(void) // stm32f10x_gpio.h 참고
     EXTI_Init(&EXTI_InitStructure);
 
     /* Button */
-    // GPIO_EXTILineConfig(GPIO_PortSourceGPIOD, GPIO_PinSource7);
-    // EXTI_InitStructure.EXTI_Line = EXTI_Line7;
-    // EXTI_InitStructure.EXTI_Mode = EXTI_Mode_Interrupt;
-    // EXTI_InitStructure.EXTI_Trigger = EXTI_Trigger_Falling;
-    // EXTI_InitStructure.EXTI_LineCmd = ENABLE;
-    // EXTI_Init(&EXTI_InitStructure);
+    GPIO_EXTILineConfig(GPIO_PortSourceGPIOD, GPIO_PinSource7);
+    EXTI_InitStructure.EXTI_Line = EXTI_Line7;
+    EXTI_InitStructure.EXTI_Mode = EXTI_Mode_Interrupt;
+    EXTI_InitStructure.EXTI_Trigger = EXTI_Trigger_Falling;
+    EXTI_InitStructure.EXTI_LineCmd = ENABLE;
+    EXTI_Init(&EXTI_InitStructure);
 	
 	// NOTE: do not select the UART GPIO pin used as EXTI Line here
 }
