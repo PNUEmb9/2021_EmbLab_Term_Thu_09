@@ -103,12 +103,12 @@ void EXTI_Configure(void) // stm32f10x_gpio.h 참고
     EXTI_Init(&EXTI_InitStructure);
 
     /* Button */
-    // GPIO_EXTILineConfig(GPIO_PortSourceGPIOD, GPIO_PinSource7);
-    // EXTI_InitStructure.EXTI_Line = EXTI_Line7;
-    // EXTI_InitStructure.EXTI_Mode = EXTI_Mode_Interrupt;
-    // EXTI_InitStructure.EXTI_Trigger = EXTI_Trigger_Falling;
-    // EXTI_InitStructure.EXTI_LineCmd = ENABLE;
-    // EXTI_Init(&EXTI_InitStructure);
+    GPIO_EXTILineConfig(GPIO_PortSourceGPIOD, GPIO_PinSource7);
+    EXTI_InitStructure.EXTI_Line = EXTI_Line7;
+    EXTI_InitStructure.EXTI_Mode = EXTI_Mode_Interrupt;
+    // EXTI_InitStructure.EXTI_Trigger = EXTI_Trigger_Rising_Falling;
+    EXTI_InitStructure.EXTI_LineCmd = ENABLE;
+    EXTI_Init(&EXTI_InitStructure);
 	
 	// NOTE: do not select the UART GPIO pin used as EXTI Line here
 }
@@ -170,6 +170,14 @@ void NVIC_Configure(void) { // misc.h 참고
     NVIC_InitStructure.NVIC_IRQChannelCmd = ENABLE;
     NVIC_Init(&NVIC_InitStructure);
     
+    //EXTI9_5
+    NVIC_EnableIRQ(EXTI9_5_IRQn);
+    NVIC_InitStructure.NVIC_IRQChannel = EXTI9_5_IRQn;
+    NVIC_InitStructure.NVIC_IRQChannelPreemptionPriority = 0x0;
+    NVIC_InitStructure.NVIC_IRQChannelSubPriority = 0x0;
+    NVIC_InitStructure.NVIC_IRQChannelCmd = ENABLE;
+    NVIC_Init(&NVIC_InitStructure);
+
     //TIM2
     NVIC_EnableIRQ(TIM2_IRQn);
     NVIC_InitStructure.NVIC_IRQChannel = TIM2_IRQn;
@@ -212,15 +220,23 @@ void EXTI3_IRQHandler(void) {
 	}
 }
 
+// Sound sensor singal recognition
 void EXIT9_5_IRQHandler(void) {
     if (EXTI_GetITStatus(EXIT_Line7) != RESET) {
         if (GPIO_ReadInputDataBit(GPIOD, GPIO_Pin_7) == Bit_RESET) {
-            if (GPIO_ReadOutputDataBit(GPIOB, GPIO_Pin_0) == Bit_RESET) {
-                turnOffLED();
-            } else {
-                turnOnLED();
-            }
+            if (getLEDStatus(GPIOB, GPIO_Pin_0) == 1) 
+                 { turnOffLED(); } 
+            else { turnOnLED(); }
         }
+        EXTI_ClearITPendingBit(EXTI_Line7);
+    }
+}
+
+int32_t getLEDStatus(GPIO_TypeDef* GPIOx, uint16_t GPIO_Pin) {
+    if (GPIO_ReadOutputDataBit(GPIOx, GPIO_Pin) == Bit_RESET) {
+        return 1;
+    } else {
+        return 0;
     }
 }
 
