@@ -12,6 +12,7 @@ static u16 maxBrightness = 1000;
 static u16 minBrightness = 100;
 static int8_t ledDirection = 1;
 
+static volatile u8 powerFlag = 0;
 static volatile u8 boundaryFlag = 0;
 static volatile u8 alertFlag = 0;
 static GPIO_InitTypeDef GPIO_InitStructure;
@@ -73,6 +74,7 @@ void LED_Init(void) {
     LED_RCC_Configure();
     LED_GPIO_AF_Configure();
     LED_TIM_Configure();
+    LED_Off();
 }
 
 void LED_On(void) {
@@ -81,13 +83,16 @@ void LED_On(void) {
     TIM_OC3PreloadConfig(TIM3, TIM_OCPreload_Disable);
     TIM_ARRPreloadConfig(TIM3, ENABLE);
     TIM_Cmd(TIM3, ENABLE);
+    powerFlag = 1;
+    printf("ON\n");
 }
 
 void LED_Off(void) {
     TIM_Cmd(TIM3, DISABLE);
     LED_GPIO_Normal_Configure();
     GPIO_ResetBits(GPIOB,GPIO_Pin_0);
-    printf("led: %d\n",GPIO_ReadOutputDataBit(GPIOB,GPIO_Pin_0));
+    powerFlag = 0;
+    printf("OFF\n");
 }
 
 void LED_ChangeBrightness(void) {
@@ -135,4 +140,8 @@ void LED_ResetAlertFlag(void) {
 
 u8 LED_GetAlertFlag(void) {
     return alertFlag; 
+}
+
+u8 LED_GetPowerStatus(void) {
+    return powerFlag;
 }
