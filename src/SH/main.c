@@ -142,15 +142,14 @@ void USART2_IRQHandler() {
 void sendstatusMessage(){
     //getLEDstatus;
     uint16_t bright =  LED_GetBrightness(void);
-    char msg[] = "LED bright : ";
+    char msg[] = "LED brightness reaches ";
     char* pmsg = msg;
     while(*pmsg!=0){
         USART_SendData(USART2, *pmsg);
         pmsg++;
     } 
     USART_SendData(USART2, bright);
-    USART_SendData(USART2, '\n');
-    
+    USART_SendData(USART2, '\r\n');
 }
 
 void sendMaxBrightMessage(){
@@ -164,9 +163,8 @@ void sendMaxBrightMessage(){
 
 }
 
-
 void sendMinBrightMessage(){
-    char msg[] = "LED bright : ";
+    char msg[] = "LED brightness reaches min brightness";
     char* pmsg = msg;
     while(*pmsg!=0){
         USART_SendData(USART2, *pmsg);
@@ -190,18 +188,15 @@ int main(void)
 
     while (1) {
         if(onFlag){
-            //turnonLED()
+            //LED_On()
             onFlag = 0;
 
         }
     
         if(offFlag){
-            //turnoffLED()
+            //LED_Off()
             offFlag =0;
-        }
-
-
-        
+        }        
       
     }
     return 0;
