@@ -170,6 +170,14 @@ void NVIC_Configure(void) { // misc.h 참고
     NVIC_InitStructure.NVIC_IRQChannelCmd = ENABLE;
     NVIC_Init(&NVIC_InitStructure);
     
+    //EXTI9_5
+    NVIC_EnableIRQ(EXTI9_5_IRQn);
+    NVIC_InitStructure.NVIC_IRQChannel = EXTI9_5_IRQn;
+    NVIC_InitStructure.NVIC_IRQChannelPreemptionPriority = 0x0;
+    NVIC_InitStructure.NVIC_IRQChannelSubPriority = 0x0;
+    NVIC_InitStructure.NVIC_IRQChannelCmd = ENABLE;
+    NVIC_Init(&NVIC_InitStructure);
+
     //TIM2
     NVIC_EnableIRQ(TIM2_IRQn);
     NVIC_InitStructure.NVIC_IRQChannel = TIM2_IRQn;
@@ -217,8 +225,10 @@ void EXIT9_5_IRQHandler(void) {
         if (GPIO_ReadInputDataBit(GPIOD, GPIO_Pin_7) == Bit_RESET) {
             if (GPIO_ReadOutputDataBit(GPIOB, GPIO_Pin_0) == Bit_RESET) {
                 turnOffLED();
+                EXTI_ClearITPendingBit(EXTI_line7);
             } else {
                 turnOnLED();
+                EXTI_ClearITPendingBit(EXTI_line7);
             }
         }
     }
