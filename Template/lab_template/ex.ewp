@@ -94,7 +94,7 @@
                 </option>
                 <option>
                     <name>GenStdoutInterface</name>
-                    <state>0</state>
+                    <state>1</state>
                 </option>
                 <option>
                     <name>GeneralMisraRules98</name>
@@ -345,6 +345,7 @@
                     <state>$PROJ_DIR$\libraries\CMSIS\DeviceSupport\Startup</state>
                     <state>$PROJ_DIR$\libraries\STM32F10x_StdPeriph_Driver_v3.5\inc</state>
                     <state>$PROJ_DIR$\libraries\STM32F10x_StdPeriph_Driver_v3.5\src</state>
+                    <state>$PROJ_DIR$\libraries\LED</state>
                     <state>$PROJ_DIR$\user</state>
                     <state>$PROJ_DIR$\user\inc</state>
                 </option>
@@ -2052,7 +2053,7 @@
                 <group>
                     <name>Startup</name>
                     <file>
-                        <name>$PROJ_DIR$\Libraries\CMSIS\DeviceSupport\Startup\startup_stm32f10x_cl.s</name>
+                        <name>$PROJ_DIR$\libraries\CMSIS\DeviceSupport\Startup\startup_stm32f10x_cl.s</name>
                     </file>
                 </group>
                 <file>
@@ -2065,6 +2066,15 @@
                     <name>$PROJ_DIR$\libraries\CMSIS\DeviceSupport\system_stm32f10x.h</name>
                 </file>
             </group>
+        </group>
+        <group>
+            <name>LED</name>
+            <file>
+                <name>$PROJ_DIR$\libraries\LED\led.c</name>
+            </file>
+            <file>
+                <name>$PROJ_DIR$\libraries\LED\led.h</name>
+            </file>
         </group>
         <group>
             <name>STM32F10x_StdPeriph_Driver_v3.5</name>
