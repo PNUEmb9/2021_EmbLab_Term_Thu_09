@@ -16,5 +16,6 @@ void LED_ResetBoundaryFlag(void);
 u8 LED_GetBoundaryFlag(void);
 void LED_ResetAlertflag(void);
 u8 LED_GetAlertFlag(void);
+u8 LED_GetPowerStatus(void);
 
 #endif

@@ -14,11 +14,17 @@ void GPIO_Configure(void);
 void NVIC_Configure(void);
 void TIM_Configure(void);
 void EXTI3_IRQHandler(void);
+void EXTI9_5_IRQHandler(void);
 void TIM2_IRQHandler(void);
 
 uint16_t prescale;
-
+TIM_TimeBaseInitTypeDef TIM_TimeBaseStructure;
+TIM_OCInitTypeDef TIM_OCInitStructure;
 //---------------------------------------------------------------------------------------------------
+
+void Delay(u16 delay) {
+    for(u16 i=0; i < delay; i++) {}
+}
 
 void RCC_Configure(void)
 {
@@ -47,6 +53,11 @@ void GPIO_Configure(void) // stm32f10x_gpio.h 참고
     GPIO_InitStructure.GPIO_Mode = GPIO_Mode_AF_PP;
     GPIO_InitStructure.GPIO_Speed = GPIO_Speed_50MHz;
     GPIO_Init(GPIOA, &GPIO_InitStructure);
+
+    GPIO_InitStructure.GPIO_Pin = GPIO_Pin_7;
+	GPIO_InitStructure.GPIO_Mode = GPIO_Mode_IPD;
+	GPIO_InitStructure.GPIO_Speed = GPIO_Speed_50MHz;
+	GPIO_Init(GPIOD, &GPIO_InitStructure);
 }
 
 void EXTI_Configure(void) // stm32f10x_gpio.h 참고
@@ -60,13 +71,18 @@ void EXTI_Configure(void) // stm32f10x_gpio.h 참고
     EXTI_InitStructure.EXTI_Trigger = EXTI_Trigger_Rising_Falling;
     EXTI_InitStructure.EXTI_LineCmd = ENABLE;
     EXTI_Init(&EXTI_InitStructure);
+
+    GPIO_EXTILineConfig(GPIO_PortSourceGPIOD, GPIO_PinSource7);
+    EXTI_InitStructure.EXTI_Line = EXTI_Line7;
+    EXTI_InitStructure.EXTI_Mode = EXTI_Mode_Interrupt;
+    EXTI_InitStructure.EXTI_Trigger = EXTI_Trigger_Rising;
+    EXTI_InitStructure.EXTI_LineCmd = ENABLE;
+    EXTI_Init(&EXTI_InitStructure);
 	
 	// NOTE: do not select the UART GPIO pin used as EXTI Line here
 }
 
 void TIM_Configure(void) {
-    TIM_TimeBaseInitTypeDef TIM_TimeBaseStructure;
-    TIM_OCInitTypeDef TIM_OCInitStructure;
     // vibration timer
     TIM_TimeBaseStructure.TIM_Prescaler = (uint16_t) (SystemCoreClock / 10000) - 1;
     TIM_TimeBaseStructure.TIM_Period = 4000-1;         
@@ -118,6 +134,13 @@ void NVIC_Configure(void) { // misc.h 참고
     NVIC_InitStructure.NVIC_IRQChannelCmd = ENABLE;
     NVIC_Init(&NVIC_InitStructure);
 
+    NVIC_EnableIRQ(EXTI9_5_IRQn);
+    NVIC_InitStructure.NVIC_IRQChannel = EXTI9_5_IRQn;
+    NVIC_InitStructure.NVIC_IRQChannelPreemptionPriority = 0x2;
+    NVIC_InitStructure.NVIC_IRQChannelSubPriority = 0x0;
+    NVIC_InitStructure.NVIC_IRQChannelCmd = ENABLE;
+    NVIC_Init(&NVIC_InitStructure);
+
 }
 
 void TIM2_IRQHandler(void) {
@@ -125,7 +148,7 @@ void TIM2_IRQHandler(void) {
         if (GPIO_ReadInputDataBit(GPIOD, GPIO_Pin_3) == Bit_RESET) {
             if(!LED_GetBoundaryFlag()) {
                 LED_ChangeBrightness();                
-                // printf("%d\t%d\n", ledBrightness, ledDimDir);
+                printf("%d\t%d\n", LED_GetBrightness(), LED_GetDirection());
             } else {
                 if(LED_GetAlertFlag()) {
                     printf("boundary\n");
@@ -153,16 +176,31 @@ void EXTI3_IRQHandler(void) {
 	}
 }
 
+void EXTI9_5_IRQHandler(void) {
+    if (EXTI_GetITStatus(EXTI_Line7) != RESET) {
+        if (GPIO_ReadInputDataBit(GPIOD, GPIO_Pin_7) != Bit_RESET) {
+            if (LED_GetPowerStatus() == 1) {
+                Delay(100000);
+                LED_Off();
+            } 
+            else {
+                Delay(100000);
+                LED_On();
+            }
+        }
+        EXTI_ClearITPendingBit(EXTI_Line7);
+    }
+}
 
 int main(void)
 {   
     SystemInit();
     RCC_Configure();
-    LED_Init();
     GPIO_Configure();
     TIM_Configure();
     EXTI_Configure();
     NVIC_Configure();
+    LED_Init();
 
 
     while (1) {
