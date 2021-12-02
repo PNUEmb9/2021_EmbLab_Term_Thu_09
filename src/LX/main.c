@@ -15,6 +15,7 @@ void GPIO_Configure(void);
 void NVIC_Configure(void);
 void TIM_Configure(void);
 void EXTI3_IRQHandler(void);
+void EXTI9_5_IRQHandler(void);
 /*
     void EXIT9_5_IRQHandler(void);
 */
@@ -77,6 +78,11 @@ void GPIO_Configure(void) // stm32f10x_gpio.h 참고
 	GPIO_InitStructure.GPIO_Mode = GPIO_Mode_AF_PP;
 	GPIO_InitStructure.GPIO_Speed = GPIO_Speed_50MHz;
 	GPIO_Init(GPIOB, &GPIO_InitStructure);
+
+    GPIO_InitStructure.GPIO_Pin = GPIO_Pin_7;
+	GPIO_InitStructure.GPIO_Mode = GPIO_Mode_IPD;
+	GPIO_InitStructure.GPIO_Speed = GPIO_Speed_50MHz;
+	GPIO_Init(GPIOD, &GPIO_InitStructure);
 }
 
 void EXTI_Configure(void) // stm32f10x_gpio.h 참고
@@ -106,7 +112,7 @@ void EXTI_Configure(void) // stm32f10x_gpio.h 참고
     GPIO_EXTILineConfig(GPIO_PortSourceGPIOD, GPIO_PinSource7);
     EXTI_InitStructure.EXTI_Line = EXTI_Line7;
     EXTI_InitStructure.EXTI_Mode = EXTI_Mode_Interrupt;
-    // EXTI_InitStructure.EXTI_Trigger = EXTI_Trigger_Rising_Falling;
+    EXTI_InitStructure.EXTI_Trigger = EXTI_Trigger_Rising;
     EXTI_InitStructure.EXTI_LineCmd = ENABLE;
     EXTI_Init(&EXTI_InitStructure);
 	
@@ -221,7 +227,7 @@ void EXTI3_IRQHandler(void) {
 }
 
 // Sound sensor singal recognition
-void EXIT9_5_IRQHandler(void) {
+void EXTI9_5_IRQHandler(void) {
     if (EXTI_GetITStatus(EXIT_Line7) != RESET) {
         if (GPIO_ReadInputDataBit(GPIOD, GPIO_Pin_7) == Bit_RESET) {
             if (getLEDStatus(GPIOB, GPIO_Pin_0) == 1) 
