@@ -41,7 +41,7 @@ TIM_BDTRInitTypeDef TIM_BDTRInitStructure;
 TIM_OCInitTypeDef TIM_OCInitStructure;
 GPIO_InitTypeDef GPIO_InitStructure;
 
-void RCC_Configure(void) // stm32f10x_rcc.h 참고
+void RCC_Configure(void)
 {
     RCC_APB2PeriphClockCmd(RCC_APB2Periph_TIM1, ENABLE);
     RCC_APB2PeriphClockCmd(RCC_APB2Periph_GPIOA, ENABLE);
@@ -60,17 +60,19 @@ void RCC_Configure(void) // stm32f10x_rcc.h 참고
 
 void GPIO_Configure(void) // stm32f10x_gpio.h 참고
 {
-
+    // Brightness touch sensor pin config
     GPIO_InitStructure.GPIO_Pin = GPIO_Pin_3;
     GPIO_InitStructure.GPIO_Mode = GPIO_Mode_IPU;
     GPIO_InitStructure.GPIO_Speed = GPIO_Speed_50MHz;
     GPIO_Init(GPIOD, &GPIO_InitStructure);
 
+    // Vibration module pin config
     GPIO_InitStructure.GPIO_Pin = GPIO_Pin_8;
     GPIO_InitStructure.GPIO_Mode = GPIO_Mode_AF_PP;
     GPIO_InitStructure.GPIO_Speed = GPIO_Speed_50MHz;
     GPIO_Init(GPIOA, &GPIO_InitStructure);
 
+    // LED with PWM pin config
 	GPIO_InitStructure.GPIO_Pin = GPIO_Pin_0;
 	GPIO_InitStructure.GPIO_Mode = GPIO_Mode_AF_PP;
 	GPIO_InitStructure.GPIO_Speed = GPIO_Speed_50MHz;
@@ -81,17 +83,6 @@ void EXTI_Configure(void) // stm32f10x_gpio.h 참고
 {
     EXTI_InitTypeDef EXTI_InitStructure;
 
-	// TODO: Select the GPIO pin (Joystick, button) used as EXTI Line using function 'GPIO_EXTILineConfig'
-	// TODO: Initialize the EXTI using the structure 'EXTI_InitTypeDef' and the function 'EXTI_Init'
-	
-    /* Joystick Down */
-	// GPIO_EXTILineConfig(GPIO_PortSourceGPIOD, GPIO_PinSource1);
-    // EXTI_InitStructure.EXTI_Line = EXTI_Line1;
-    // EXTI_InitStructure.EXTI_Mode = EXTI_Mode_Interrupt;
-    // EXTI_InitStructure.EXTI_Trigger = EXTI_Trigger_Falling;
-    // EXTI_InitStructure.EXTI_LineCmd = ENABLE;
-    // EXTI_Init(&EXTI_InitStructure);
-
     /* Joystick Up */
 	GPIO_EXTILineConfig(GPIO_PortSourceGPIOD, GPIO_PinSource3);
     EXTI_InitStructure.EXTI_Line = EXTI_Line3;
@@ -99,19 +90,12 @@ void EXTI_Configure(void) // stm32f10x_gpio.h 참고
     EXTI_InitStructure.EXTI_Trigger = EXTI_Trigger_Rising_Falling;
     EXTI_InitStructure.EXTI_LineCmd = ENABLE;
     EXTI_Init(&EXTI_InitStructure);
-
-    /* Button */
-    // GPIO_EXTILineConfig(GPIO_PortSourceGPIOD, GPIO_PinSource7);
-    // EXTI_InitStructure.EXTI_Line = EXTI_Line7;
-    // EXTI_InitStructure.EXTI_Mode = EXTI_Mode_Interrupt;
-    // EXTI_InitStructure.EXTI_Trigger = EXTI_Trigger_Falling;
-    // EXTI_InitStructure.EXTI_LineCmd = ENABLE;
-    // EXTI_Init(&EXTI_InitStructure);
 	
 	// NOTE: do not select the UART GPIO pin used as EXTI Line here
 }
 
 void TIM_Configure(void) {
+    // vibration timer
     TIM_TimeBaseStructure.TIM_Prescaler = (uint16_t) (SystemCoreClock / 10000) - 1;
     TIM_TimeBaseStructure.TIM_Period = 4000-1;         
     TIM_TimeBaseStructure.TIM_ClockDivision = TIM_CKD_DIV1;
@@ -121,6 +105,7 @@ void TIM_Configure(void) {
     TIM_SelectOnePulseMode(TIM1,TIM_OPMode_Single);
     TIM_CtrlPWMOutputs(TIM1,ENABLE);
 
+    // Touch sensor checking timer
     TIM_TimeBaseStructure.TIM_Prescaler = (uint16_t) (SystemCoreClock / 1000000) - 1;
     TIM_TimeBaseStructure.TIM_Period = 2000-1;         
     TIM_TimeBaseStructure.TIM_ClockDivision = TIM_CKD_DIV1;
@@ -129,6 +114,7 @@ void TIM_Configure(void) {
     TIM_TimeBaseInit(TIM2, &TIM_TimeBaseStructure);
     TIM_ARRPreloadConfig(TIM2, ENABLE);
 
+    // LED PWM timer
     TIM_TimeBaseStructure.TIM_Prescaler = (uint16_t) (SystemCoreClock / 1000000) - 1;
     TIM_TimeBaseStructure.TIM_Period = 1000-1;
     TIM_TimeBaseStructure.TIM_ClockDivision = TIM_CKD_DIV1;
@@ -142,6 +128,7 @@ void TIM_Configure(void) {
     TIM_OCInitStructure.TIM_Pulse = 2000;
     TIM_OC1Init(TIM1, &TIM_OCInitStructure);
     TIM_OC1PreloadConfig(TIM1, TIM_OCPreload_Disable);
+    //Should disable below:
     //TIM_ARRPreloadConfig(TIM1, ENABLE);
 
     TIM_OCInitStructure.TIM_OCMode = TIM_OCMode_PWM2;

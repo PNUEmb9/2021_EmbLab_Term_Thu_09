@@ -4,7 +4,6 @@
 #include "stm32f10x_gpio.h"
 #include "stm32f10x_rcc.h"
 #include "stm32f10x_usart.h"
-#include "stm32f10x_adc.h"
 #include "lcd.h"
 #include "touch.h"
 
@@ -14,28 +13,38 @@ void RCC_Configure(void);
 void GPIO_Configure(void);
 void NVIC_Configure(void);
 void TIM_Configure(void);
-void change(uint16_t pulse);
-
+void EXTI3_IRQHandler(void);
 void TIM2_IRQHandler(void);
+void TIM3_IRQHandler(void);
+
+void changeBrightness(void);
+void turnOnLED(void);
+void turnOffLED(void);
 
 uint16_t prescale;
-uint16_t motorFlag = 0;
-uint16_t ledPowerFlag = 0;
-uint16_t led1ToggleFlag = 0;
-uint16_t led2ToggleFlag = 0;
-uint16_t led1Counter = 0;
-uint16_t led2Counter = 0;
-int color[12] = {WHITE, CYAN, BLUE, RED, MAGENTA, LGRAY, GREEN, YELLOW, BROWN, BRRED, GRAY};
-char* ledStatus[2] = {"OFF", "ON"};
-int motorIdx[3] = {700, 1500, 2600};
+uint16_t pwmPulse = 1000;
+uint16_t sysMaxBrightness = 1000;
+uint16_t sysMinBrightness = 0;
+uint16_t ledBrightness = 500;
+uint16_t minBrightness = 100;
+uint16_t maxBrightness = 1000;
+int8_t ledDimDir = 1;
+volatile uint8_t boundaryFlag = 0;
+volatile uint8_t alertFlag = 0;
+int16_t color[12] = {WHITE, CYAN, BLUE, RED, MAGENTA, LGRAY, GREEN, YELLOW, BROWN, BRRED, GRAY};
 
 //---------------------------------------------------------------------------------------------------
 
 TIM_TimeBaseInitTypeDef TIM_TimeBaseStructure;
+TIM_BDTRInitTypeDef TIM_BDTRInitStructure;
 TIM_OCInitTypeDef TIM_OCInitStructure;
+GPIO_InitTypeDef GPIO_InitStructure;
 
-void RCC_Configure(void) // stm32f10x_rcc.h 참고
+void RCC_Configure(void)
 {
+    RCC_APB2PeriphClockCmd(RCC_APB2Periph_TIM1, ENABLE);
+    RCC_APB2PeriphClockCmd(RCC_APB2Periph_GPIOA, ENABLE);
+    
     // TIM2 clock enable
     RCC_APB1PeriphClockCmd(RCC_APB1Periph_TIM2, ENABLE);
     RCC_APB2PeriphClockCmd(RCC_APB2Periph_GPIOD, ENABLE);
@@ -43,42 +52,107 @@ void RCC_Configure(void) // stm32f10x_rcc.h 참고
     RCC_APB1PeriphClockCmd(RCC_APB1Periph_TIM3, ENABLE);
     RCC_APB2PeriphClockCmd(RCC_APB2Periph_GPIOB, ENABLE);
 	/* LED pin clock enable */
+
+    /* Alternate Function IO clock enable */
+	RCC_APB2PeriphClockCmd(RCC_APB2Periph_AFIO, ENABLE);
 }
 
 void GPIO_Configure(void) // stm32f10x_gpio.h 참고
 {
-    GPIO_InitTypeDef GPIO_InitStructure;
-
-    GPIO_InitStructure.GPIO_Pin = GPIO_Pin_2 | GPIO_Pin_3;
-    GPIO_InitStructure.GPIO_Mode = GPIO_Mode_Out_PP;
-    GPIO_InitStructure.GPIO_Speed = GPIO_Speed_10MHz;
+    // Brightness touch sensor pin config
+    GPIO_InitStructure.GPIO_Pin = GPIO_Pin_3;
+    GPIO_InitStructure.GPIO_Mode = GPIO_Mode_IPU;
+    GPIO_InitStructure.GPIO_Speed = GPIO_Speed_50MHz;
     GPIO_Init(GPIOD, &GPIO_InitStructure);
 
+    // Vibration module pin config
+    GPIO_InitStructure.GPIO_Pin = GPIO_Pin_8;
+    GPIO_InitStructure.GPIO_Mode = GPIO_Mode_AF_PP;
+    GPIO_InitStructure.GPIO_Speed = GPIO_Speed_50MHz;
+    GPIO_Init(GPIOA, &GPIO_InitStructure);
+
+    // LED with PWM pin config
 	GPIO_InitStructure.GPIO_Pin = GPIO_Pin_0;
 	GPIO_InitStructure.GPIO_Mode = GPIO_Mode_AF_PP;
 	GPIO_InitStructure.GPIO_Speed = GPIO_Speed_50MHz;
 	GPIO_Init(GPIOB, &GPIO_InitStructure);
 }
 
+void EXTI_Configure(void) // stm32f10x_gpio.h 참고
+{
+    EXTI_InitTypeDef EXTI_InitStructure;
+
+	// TODO: Select the GPIO pin (Joystick, button) used as EXTI Line using function 'GPIO_EXTILineConfig'
+	// TODO: Initialize the EXTI using the structure 'EXTI_InitTypeDef' and the function 'EXTI_Init'
+	
+    /* Joystick Down */
+	// GPIO_EXTILineConfig(GPIO_PortSourceGPIOD, GPIO_PinSource1);
+    // EXTI_InitStructure.EXTI_Line = EXTI_Line1;
+    // EXTI_InitStructure.EXTI_Mode = EXTI_Mode_Interrupt;
+    // EXTI_InitStructure.EXTI_Trigger = EXTI_Trigger_Falling;
+    // EXTI_InitStructure.EXTI_LineCmd = ENABLE;
+    // EXTI_Init(&EXTI_InitStructure);
+
+    /* Joystick Up */
+	GPIO_EXTILineConfig(GPIO_PortSourceGPIOD, GPIO_PinSource3);
+    EXTI_InitStructure.EXTI_Line = EXTI_Line3;
+    EXTI_InitStructure.EXTI_Mode = EXTI_Mode_Interrupt;
+    EXTI_InitStructure.EXTI_Trigger = EXTI_Trigger_Rising_Falling;
+    EXTI_InitStructure.EXTI_LineCmd = ENABLE;
+    EXTI_Init(&EXTI_InitStructure);
+
+    /* Button */
+    // GPIO_EXTILineConfig(GPIO_PortSourceGPIOD, GPIO_PinSource7);
+    // EXTI_InitStructure.EXTI_Line = EXTI_Line7;
+    // EXTI_InitStructure.EXTI_Mode = EXTI_Mode_Interrupt;
+    // EXTI_InitStructure.EXTI_Trigger = EXTI_Trigger_Falling;
+    // EXTI_InitStructure.EXTI_LineCmd = ENABLE;
+    // EXTI_Init(&EXTI_InitStructure);
+	
+	// NOTE: do not select the UART GPIO pin used as EXTI Line here
+}
+
 void TIM_Configure(void) {
-    TIM_TimeBaseStructure.TIM_Period = 10000;         
-    TIM_TimeBaseStructure.TIM_Prescaler = 7200;
+    // vibration timer
+    TIM_TimeBaseStructure.TIM_Prescaler = (uint16_t) (SystemCoreClock / 10000) - 1;
+    TIM_TimeBaseStructure.TIM_Period = 4000-1;         
+    TIM_TimeBaseStructure.TIM_ClockDivision = TIM_CKD_DIV1;
+    TIM_TimeBaseStructure.TIM_CounterMode = TIM_CounterMode_Down;
+    TIM_TimeBaseStructure.TIM_RepetitionCounter = 2-1;
+    TIM_TimeBaseInit(TIM1, &TIM_TimeBaseStructure);
+    TIM_SelectOnePulseMode(TIM1,TIM_OPMode_Single);
+    TIM_CtrlPWMOutputs(TIM1,ENABLE);
+
+    // Touch sensor checking timer
+    TIM_TimeBaseStructure.TIM_Prescaler = (uint16_t) (SystemCoreClock / 1000000) - 1;
+    TIM_TimeBaseStructure.TIM_Period = 2000-1;         
     TIM_TimeBaseStructure.TIM_ClockDivision = TIM_CKD_DIV1;
     TIM_TimeBaseStructure.TIM_CounterMode = TIM_CounterMode_Down;
     TIM_TimeBaseStructure.TIM_RepetitionCounter = 0;
     TIM_TimeBaseInit(TIM2, &TIM_TimeBaseStructure);
     TIM_ARRPreloadConfig(TIM2, ENABLE);
 
+    // LED PWM timer
     TIM_TimeBaseStructure.TIM_Prescaler = (uint16_t) (SystemCoreClock / 1000000) - 1;
-    TIM_TimeBaseStructure.TIM_Period = 20000-1;
-    TIM_TimeBaseStructure.TIM_ClockDivision = 0;
+    TIM_TimeBaseStructure.TIM_Period = 1000-1;
+    TIM_TimeBaseStructure.TIM_ClockDivision = TIM_CKD_DIV1;
     TIM_TimeBaseStructure.TIM_CounterMode = TIM_CounterMode_Down;
+    TIM_TimeBaseStructure.TIM_RepetitionCounter = 0;
     TIM_TimeBaseInit(TIM3, &TIM_TimeBaseStructure);
 
     TIM_OCInitStructure.TIM_OCMode = TIM_OCMode_PWM1;
     TIM_OCInitStructure.TIM_OCPolarity = TIM_OCPolarity_High;
     TIM_OCInitStructure.TIM_OutputState = TIM_OutputState_Enable;
-    TIM_OCInitStructure.TIM_Pulse = 1500; // us
+    TIM_OCInitStructure.TIM_Pulse = 2000;
+    TIM_OC1Init(TIM1, &TIM_OCInitStructure);
+    TIM_OC1PreloadConfig(TIM1, TIM_OCPreload_Disable);
+    //Should disable below:
+    //TIM_ARRPreloadConfig(TIM1, ENABLE);
+
+    TIM_OCInitStructure.TIM_OCMode = TIM_OCMode_PWM2;
+    TIM_OCInitStructure.TIM_OCPolarity = TIM_OCPolarity_Low;
+    TIM_OCInitStructure.TIM_OutputState = TIM_OutputState_Enable;
+    TIM_OCInitStructure.TIM_Pulse = ledBrightness;
     TIM_OC3Init(TIM3, &TIM_OCInitStructure);
     TIM_OC3PreloadConfig(TIM3, TIM_OCPreload_Disable);
     TIM_ARRPreloadConfig(TIM3, ENABLE);
@@ -90,40 +164,90 @@ void TIM_Configure(void) {
 
 void NVIC_Configure(void) { // misc.h 참고
     NVIC_InitTypeDef NVIC_InitStructure;
-    NVIC_PriorityGroupConfig(NVIC_PriorityGroup_1);
-
+    NVIC_PriorityGroupConfig(NVIC_PriorityGroup_2);
+    
+    // Brightness Touch sensor
+    NVIC_InitStructure.NVIC_IRQChannel = EXTI3_IRQn;
+    NVIC_InitStructure.NVIC_IRQChannelPreemptionPriority = 0x0;
+    NVIC_InitStructure.NVIC_IRQChannelSubPriority = 0x0;
+    NVIC_InitStructure.NVIC_IRQChannelCmd = ENABLE;
+    NVIC_Init(&NVIC_InitStructure);
+    
     //TIM2
     NVIC_EnableIRQ(TIM2_IRQn);
     NVIC_InitStructure.NVIC_IRQChannel = TIM2_IRQn;
-    NVIC_InitStructure.NVIC_IRQChannelPreemptionPriority = 0x0;
-    NVIC_InitStructure.NVIC_IRQChannelSubPriority = 0x1;
+    NVIC_InitStructure.NVIC_IRQChannelPreemptionPriority = 0x1;
+    NVIC_InitStructure.NVIC_IRQChannelSubPriority = 0x0;
     NVIC_InitStructure.NVIC_IRQChannelCmd = ENABLE;
-    
     NVIC_Init(&NVIC_InitStructure);
+
 }
 
 void TIM2_IRQHandler(void) {
     if(TIM_GetITStatus(TIM2, TIM_IT_Update) != RESET) {
-        led2Counter = (led2Counter+1) % 5; 
-        led1ToggleFlag = !led1ToggleFlag;
-        led2ToggleFlag = led2ToggleFlag ^(!led2Counter);
-        change(motorIdx[motorFlag]);
-        motorFlag = (motorFlag +1) % 3;
-
+        if (GPIO_ReadInputDataBit(GPIOD, GPIO_Pin_3) == Bit_RESET) {
+            if(!boundaryFlag) {
+                changeBrightness();                
+                // printf("%d\t%d\n", ledBrightness, ledDimDir);
+            } else {
+                if(alertFlag) {
+                    printf("boundary\n");
+                    TIM_Cmd(TIM1,ENABLE);
+                    alertFlag = 0;
+                }
+            }
+		}
         TIM_ClearITPendingBit(TIM2,TIM_IT_Update);
     }
 }
 
-void change(uint16_t per)
+// Brightness touch
+void EXTI3_IRQHandler(void) {
+    if (EXTI_GetITStatus(EXTI_Line3) != RESET) {
+		if (GPIO_ReadInputDataBit(GPIOD, GPIO_Pin_3) == Bit_RESET) {
+            boundaryFlag = 0;
+            // printf("touched\n");
+		} else {
+            ledDimDir = -ledDimDir;
+            printf("brightness: %d\%\n", (int)((float)(ledBrightness-sysMinBrightness)/(float)(sysMaxBrightness-sysMinBrightness)*100));
+            // printf("released\n");
+        }
+        EXTI_ClearITPendingBit(EXTI_Line3);
+	}
+}
+
+void changeBrightness(void)
 {
-    uint16_t pwm_pulse;
-    pwm_pulse = per;
+    ledBrightness = (ledBrightness+1*ledDimDir);
+    boundaryFlag = !((ledBrightness - minBrightness) % (maxBrightness-minBrightness));
+    alertFlag = boundaryFlag;
+
     TIM_OCInitStructure.TIM_OCMode = TIM_OCMode_PWM1;
     TIM_OCInitStructure.TIM_OCPolarity = TIM_OCPolarity_High;
     TIM_OCInitStructure.TIM_OutputState = TIM_OutputState_Enable;
-    TIM_OCInitStructure.TIM_Pulse = pwm_pulse;
+    TIM_OCInitStructure.TIM_Pulse = ledBrightness;
     TIM_OC3Init(TIM3, &TIM_OCInitStructure);
 }
+
+void turnOnLED(void) {
+    GPIO_InitStructure.GPIO_Pin = GPIO_Pin_0;
+    GPIO_InitStructure.GPIO_Mode = GPIO_Mode_AF_PP;
+    GPIO_InitStructure.GPIO_Speed = GPIO_Speed_50MHz;
+    GPIO_Init(GPIOB, &GPIO_InitStructure);
+    TIM_OCInitStructure.TIM_Pulse = ledBrightness;
+    TIM_OC3Init(TIM3, &TIM_OCInitStructure);
+    TIM_Cmd(TIM3, ENABLE);
+}
+
+void turnOffLED(void) {
+    TIM_Cmd(TIM3, DISABLE);
+    GPIO_InitStructure.GPIO_Pin = GPIO_Pin_0;
+    GPIO_InitStructure.GPIO_Mode = GPIO_Mode_Out_PP;
+    GPIO_Init(GPIOB, &GPIO_InitStructure);
+    GPIO_ResetBits(GPIOB,GPIO_Pin_0);
+    printf("led: %d\n",GPIO_ReadOutputDataBit(GPIOB,GPIO_Pin_0));
+}
+
 
 int main(void)
 {   
@@ -131,34 +255,11 @@ int main(void)
     RCC_Configure();
     GPIO_Configure();
     TIM_Configure();
+    EXTI_Configure();
     NVIC_Configure();
 
-    LCD_Init();
-    Touch_Configuration();
-    Touch_Adjust();
-    LCD_Clear(WHITE);
-
-    uint16_t rawTouchX = 0;
-    uint16_t rawTouchY = 0;
-    uint16_t touchX = 0;
-    uint16_t touchY = 0;
-
     while (1) {
-        LCD_ShowString(40, 40, "THU_TEAM09", BLACK, WHITE);
-        LCD_Fill(40,60,90,100, WHITE);
-        LCD_ShowString(40, 60, ledStatus[led1ToggleFlag & ledPowerFlag], BLACK, WHITE);
-        LCD_ShowString(40, 80, ledStatus[led2ToggleFlag & ledPowerFlag], BLACK, WHITE);
-        LCD_DrawRectangle(40, 100, 80, 140);
-        LCD_ShowString(50, 110, "BTN", BLACK, WHITE);
-        GPIO_Write(GPIOD, ((GPIO_Pin_2 * led1ToggleFlag) | (GPIO_Pin_3 * led2ToggleFlag))*ledPowerFlag);
-
-        Touch_GetXY(&rawTouchX, &rawTouchY, 0); //Wait until Touched
-        Convert_Pos(rawTouchX, rawTouchY, &touchX, &touchY);
-        if(touchX >= 40 && touchX <= 100 && touchY >= 80 && touchY <= 140) {
-            ledPowerFlag = !ledPowerFlag;
-            touchX = 0;
-            touchY = 0;
-        }
+        //printf("%d\n", GPIO_ReadInputDataBit(GPIOD,GPIO_Pin_3));
     }
     return 0;
 }
