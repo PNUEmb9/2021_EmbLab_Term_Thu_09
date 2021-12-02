@@ -228,7 +228,7 @@ void EXTI3_IRQHandler(void) {
 
 // Sound sensor singal recognition
 void EXTI9_5_IRQHandler(void) {
-    if (EXTI_GetITStatus(EXIT_Line7) != RESET) {
+    if (EXTI_GetITStatus(EXTI_Line7) != RESET) {
         if (GPIO_ReadInputDataBit(GPIOD, GPIO_Pin_7) == Bit_RESET) {
             if (getLEDStatus(GPIOB, GPIO_Pin_0) == 1) 
                  { turnOffLED(); } 
