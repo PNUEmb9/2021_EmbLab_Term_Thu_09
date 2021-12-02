@@ -232,7 +232,7 @@ void EXIT9_5_IRQHandler(void) {
     }
 }
 
-uint8_t getLEDStatus(GPIO_TypeDef* GPIOx, uint16_t GPIO_Pin) {
+int32_t getLEDStatus(GPIO_TypeDef* GPIOx, uint16_t GPIO_Pin) {
     if (GPIO_ReadOutputDataBit(GPIOx, GPIO_Pin) == Bit_RESET) {
         return 1;
     } else {
