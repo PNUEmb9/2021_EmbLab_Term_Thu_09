@@ -90,7 +90,7 @@
                 </option>
                 <option>
                     <name>GenStdoutInterface</name>
-                    <state>0</state>
+                    <state>1</state>
                 </option>
                 <option>
                     <name>RTConfigPath2</name>
@@ -337,6 +337,7 @@
                     <state>$PROJ_DIR$\libraries\STM32F10x_StdPeriph_Driver_v3.5\inc</state>
                     <state>$PROJ_DIR$\libraries\STM32F10x_StdPeriph_Driver_v3.5\src</state>
                     <state>$PROJ_DIR$\libraries\LCD</state>
+                    <state>$PROJ_DIR$\libraries\LED</state>
                     <state>$PROJ_DIR$\user</state>
                     <state>$PROJ_DIR$\user\inc</state>
                 </option>
@@ -2140,6 +2141,15 @@
             </file>
             <file>
                 <name>$PROJ_DIR$\libraries\LCD\touch.h</name>
+            </file>
+        </group>
+        <group>
+            <name>LED</name>
+            <file>
+                <name>$PROJ_DIR$\Libraries\LED\led.c</name>
+            </file>
+            <file>
+                <name>$PROJ_DIR$\Libraries\LED\led.h</name>
             </file>
         </group>
         <group>

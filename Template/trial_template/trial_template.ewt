@@ -2890,6 +2890,15 @@
             </file>
         </group>
         <group>
+            <name>LED</name>
+            <file>
+                <name>$PROJ_DIR$\Libraries\LED\led.c</name>
+            </file>
+            <file>
+                <name>$PROJ_DIR$\Libraries\LED\led.h</name>
+            </file>
+        </group>
+        <group>
             <name>STM32F10x_StdPeriph_Driver_v3.5</name>
             <group>
                 <name>inc</name>

@@ -17,13 +17,24 @@ void EXTI3_IRQHandler(void);
 void EXTI9_5_IRQHandler(void);
 void TIM2_IRQHandler(void);
 
+typedef enum _LEDStatus {
+    DEFAULT = 0,
+    TOGGLE_POWER,
+    START_ADJUST,
+    CHANGE_BRIGHTNESS,
+    PEND_ADJUST,
+    FINISH_ADJUST
+} LEDStatus;
+
+LEDStatus currentStatus = DEFAULT;
+
 uint16_t prescale;
 TIM_TimeBaseInitTypeDef TIM_TimeBaseStructure;
 TIM_OCInitTypeDef TIM_OCInitStructure;
 //---------------------------------------------------------------------------------------------------
 
-void Delay(u16 delay) {
-    for(u16 i=0; i < delay; i++) {}
+void Delay(u32 delay) {
+    for(u32 i=0; i < delay; i++) {}
 }
 
 void RCC_Configure(void)
@@ -145,18 +156,9 @@ void NVIC_Configure(void) { // misc.h 참고
 
 void TIM2_IRQHandler(void) {
     if(TIM_GetITStatus(TIM2, TIM_IT_Update) != RESET) {
-        if (GPIO_ReadInputDataBit(GPIOD, GPIO_Pin_3) == Bit_RESET) {
-            if(!LED_GetBoundaryFlag()) {
-                LED_ChangeBrightness();                
-                printf("%d\t%d\n", LED_GetBrightness(), LED_GetDirection());
-            } else {
-                if(LED_GetAlertFlag()) {
-                    printf("boundary\n");
-                    TIM_Cmd(TIM1,ENABLE);
-                    LED_ResetAlertFlag();
-                }
-            }
-		}
+        if(currentStatus == PEND_ADJUST) {
+            currentStatus = CHANGE_BRIGHTNESS;
+        }
         TIM_ClearITPendingBit(TIM2,TIM_IT_Update);
     }
 }
@@ -165,12 +167,9 @@ void TIM2_IRQHandler(void) {
 void EXTI3_IRQHandler(void) {
     if (EXTI_GetITStatus(EXTI_Line3) != RESET) {
 		if (GPIO_ReadInputDataBit(GPIOD, GPIO_Pin_3) == Bit_RESET) {
-            LED_ResetBoundaryFlag();
-            // printf("touched\n");
+            currentStatus = START_ADJUST;
 		} else {
-            LED_ToggleDirection();
-            printf("brightness: %d\%\n", LED_GetBrightnessWithPercent());
-            // printf("released\n");
+            currentStatus = FINISH_ADJUST;
         }
         EXTI_ClearITPendingBit(EXTI_Line3);
 	}
@@ -179,14 +178,7 @@ void EXTI3_IRQHandler(void) {
 void EXTI9_5_IRQHandler(void) {
     if (EXTI_GetITStatus(EXTI_Line7) != RESET) {
         if (GPIO_ReadInputDataBit(GPIOD, GPIO_Pin_7) != Bit_RESET) {
-            if (LED_GetPowerStatus() == 1) {
-                Delay(100000);
-                LED_Off();
-            } 
-            else {
-                Delay(100000);
-                LED_On();
-            }
+            currentStatus = TOGGLE_POWER;
         }
         EXTI_ClearITPendingBit(EXTI_Line7);
     }
@@ -202,9 +194,47 @@ int main(void)
     NVIC_Configure();
     LED_Init();
 
-
     while (1) {
-        //printf("%d\n", GPIO_ReadInputDataBit(GPIOD,GPIO_Pin_3));
+        switch (currentStatus) {
+        case DEFAULT:
+            break;
+        case TOGGLE_POWER:
+            if (LED_GetPowerStatus() == 1) {
+                LED_Off();
+                Delay(1000000);
+            } else {
+                LED_On();
+                printf("brightness: %d%%\n", LED_GetBrightnessWithPercent());
+                Delay(1000000);
+            }
+            currentStatus = DEFAULT;
+            break;
+        case START_ADJUST:
+            LED_ResetBoundaryFlag();
+            currentStatus = PEND_ADJUST;
+            break;
+        case CHANGE_BRIGHTNESS:
+            if(!LED_GetBoundaryFlag()) {
+                LED_ChangeBrightness();                
+                printf("%d\t%d\n", LED_GetBrightness(), LED_GetDirection());
+            } else {
+                if(LED_GetAlertFlag()) {
+                    printf("boundary\n");
+                    TIM_Cmd(TIM1,ENABLE);
+                    LED_ResetAlertFlag();
+                }
+            }
+            currentStatus = PEND_ADJUST;
+            break;
+        case PEND_ADJUST:
+            break;
+        case FINISH_ADJUST:
+            LED_ToggleDirection();
+            printf("brightness: %d%%\n", LED_GetBrightnessWithPercent());
+            currentStatus = DEFAULT;
+            break;
+        }
+        
     }
     return 0;
 }
