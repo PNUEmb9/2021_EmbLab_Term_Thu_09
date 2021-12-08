@@ -2,11 +2,7 @@
 
 "C:\Program Files\IAR Systems\Embedded Workbench 9.0\arm\bin\armJLINK.dll" 
 
-<<<<<<< HEAD
 "D:\SchoolExp\2021_EmbLab_Term_Thu_09\Template\trial_template\Debug\Exe\test.out" 
-=======
-"D:\SchoolExp\2021_EmbLab_Term_Thu_09\trial_template\Debug\Exe\test.out" 
->>>>>>> 63e3f975fbc78a6d178948b1ed0a2a1736920775
 
 --plugin="C:\Program Files\IAR Systems\Embedded Workbench 9.0\arm\bin\armbat.dll" 
 

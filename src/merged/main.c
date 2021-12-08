@@ -17,7 +17,6 @@ void EXTI3_IRQHandler(void);
 void EXTI9_5_IRQHandler(void);
 void TIM2_IRQHandler(void);
 
-<<<<<<< HEAD
 typedef enum _LEDStatus {
     DEFAULT = 0,
     TOGGLE_POWER,
@@ -29,20 +28,13 @@ typedef enum _LEDStatus {
 
 LEDStatus currentStatus = DEFAULT;
 
-=======
->>>>>>> 63e3f975fbc78a6d178948b1ed0a2a1736920775
 uint16_t prescale;
 TIM_TimeBaseInitTypeDef TIM_TimeBaseStructure;
 TIM_OCInitTypeDef TIM_OCInitStructure;
 //---------------------------------------------------------------------------------------------------
 
-<<<<<<< HEAD
 void Delay(u32 delay) {
     for(u32 i=0; i < delay; i++) {}
-=======
-void Delay(u16 delay) {
-    for(u16 i=0; i < delay; i++) {}
->>>>>>> 63e3f975fbc78a6d178948b1ed0a2a1736920775
 }
 
 void RCC_Configure(void)
@@ -164,24 +156,9 @@ void NVIC_Configure(void) { // misc.h 참고
 
 void TIM2_IRQHandler(void) {
     if(TIM_GetITStatus(TIM2, TIM_IT_Update) != RESET) {
-<<<<<<< HEAD
         if(currentStatus == PEND_ADJUST) {
             currentStatus = CHANGE_BRIGHTNESS;
         }
-=======
-        if (GPIO_ReadInputDataBit(GPIOD, GPIO_Pin_3) == Bit_RESET) {
-            if(!LED_GetBoundaryFlag()) {
-                LED_ChangeBrightness();                
-                printf("%d\t%d\n", LED_GetBrightness(), LED_GetDirection());
-            } else {
-                if(LED_GetAlertFlag()) {
-                    printf("boundary\n");
-                    TIM_Cmd(TIM1,ENABLE);
-                    LED_ResetAlertFlag();
-                }
-            }
-		}
->>>>>>> 63e3f975fbc78a6d178948b1ed0a2a1736920775
         TIM_ClearITPendingBit(TIM2,TIM_IT_Update);
     }
 }
@@ -190,18 +167,9 @@ void TIM2_IRQHandler(void) {
 void EXTI3_IRQHandler(void) {
     if (EXTI_GetITStatus(EXTI_Line3) != RESET) {
 		if (GPIO_ReadInputDataBit(GPIOD, GPIO_Pin_3) == Bit_RESET) {
-<<<<<<< HEAD
             currentStatus = START_ADJUST;
 		} else {
             currentStatus = FINISH_ADJUST;
-=======
-            LED_ResetBoundaryFlag();
-            // printf("touched\n");
-		} else {
-            LED_ToggleDirection();
-            printf("brightness: %d\%\n", LED_GetBrightnessWithPercent());
-            // printf("released\n");
->>>>>>> 63e3f975fbc78a6d178948b1ed0a2a1736920775
         }
         EXTI_ClearITPendingBit(EXTI_Line3);
 	}
@@ -210,18 +178,7 @@ void EXTI3_IRQHandler(void) {
 void EXTI9_5_IRQHandler(void) {
     if (EXTI_GetITStatus(EXTI_Line7) != RESET) {
         if (GPIO_ReadInputDataBit(GPIOD, GPIO_Pin_7) != Bit_RESET) {
-<<<<<<< HEAD
             currentStatus = TOGGLE_POWER;
-=======
-            if (LED_GetPowerStatus() == 1) {
-                Delay(100000);
-                LED_Off();
-            } 
-            else {
-                Delay(100000);
-                LED_On();
-            }
->>>>>>> 63e3f975fbc78a6d178948b1ed0a2a1736920775
         }
         EXTI_ClearITPendingBit(EXTI_Line7);
     }
@@ -237,7 +194,6 @@ int main(void)
     NVIC_Configure();
     LED_Init();
 
-<<<<<<< HEAD
     while (1) {
         switch (currentStatus) {
         case DEFAULT:
@@ -279,11 +235,6 @@ int main(void)
             break;
         }
         
-=======
-
-    while (1) {
-        //printf("%d\n", GPIO_ReadInputDataBit(GPIOD,GPIO_Pin_3));
->>>>>>> 63e3f975fbc78a6d178948b1ed0a2a1736920775
     }
     return 0;
 }

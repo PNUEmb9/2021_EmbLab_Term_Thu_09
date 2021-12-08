@@ -1,8 +1,4 @@
 #include "led.h"
-<<<<<<< HEAD
-=======
-#include "stdio.h"
->>>>>>> 63e3f975fbc78a6d178948b1ed0a2a1736920775
 #include "stm32f10x.h"
 #include "stm32f10x_rcc.h"
 #include "stm32f10x_gpio.h"
@@ -87,10 +83,6 @@ void LED_On(void) {
     TIM_ARRPreloadConfig(TIM3, ENABLE);
     TIM_Cmd(TIM3, ENABLE);
     powerFlag = 1;
-<<<<<<< HEAD
-=======
-    printf("ON\n");
->>>>>>> 63e3f975fbc78a6d178948b1ed0a2a1736920775
 }
 
 void LED_Off(void) {
@@ -98,28 +90,16 @@ void LED_Off(void) {
     LED_GPIO_Normal_Configure();
     GPIO_ResetBits(GPIOB,GPIO_Pin_0);
     powerFlag = 0;
-<<<<<<< HEAD
 }
 
 void LED_ChangeBrightness(void) {
     if(!LED_GetPowerStatus()) {return;}
-=======
-    printf("OFF\n");
-}
-
-void LED_ChangeBrightness(void) {
->>>>>>> 63e3f975fbc78a6d178948b1ed0a2a1736920775
     ledBrightness = (ledBrightness+1*ledDirection);
     ledBrightness = myClamp(ledBrightness, minBrightness, maxBrightness);
     boundaryFlag = !((ledBrightness - minBrightness) % (maxBrightness-minBrightness));
     alertFlag = boundaryFlag;
 
-<<<<<<< HEAD
     LED_PWM_Apply(ledBrightness);}
-=======
-    LED_PWM_Apply(ledBrightness);
-}
->>>>>>> 63e3f975fbc78a6d178948b1ed0a2a1736920775
 
 u16 LED_GetBrightness(void) {
     return ledBrightness;
@@ -130,10 +110,7 @@ u16 LED_GetBrightnessWithPercent(void) {
 }
 
 void LED_ToggleDirection(void) {
-<<<<<<< HEAD
     if(!LED_GetPowerStatus()) return;
-=======
->>>>>>> 63e3f975fbc78a6d178948b1ed0a2a1736920775
     if(ledBrightness >= maxBrightness) {
         ledDirection = -1;
     } else if(ledBrightness <=minBrightness) {
