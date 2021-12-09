@@ -12,7 +12,7 @@ static u16 minBrightness = 100;
 static int8_t ledDirection = 1;
 
 static volatile u8 powerFlag = 0;
-static volatile u8 boundaryFlag = 0;
+static volatile int8_t boundaryStatus = 0;
 static volatile u8 alertFlag = 0;
 static GPIO_InitTypeDef GPIO_InitStructure;
 static TIM_TimeBaseInitTypeDef TIM_TimeBaseStructure;
@@ -94,12 +94,18 @@ void LED_Off(void) {
 
 void LED_ChangeBrightness(void) {
     if(!LED_GetPowerStatus()) {return;}
-    ledBrightness = (ledBrightness+1*ledDirection);
-    ledBrightness = myClamp(ledBrightness, minBrightness, maxBrightness);
-    boundaryFlag = !((ledBrightness - minBrightness) % (maxBrightness-minBrightness));
-    alertFlag = boundaryFlag;
+    ledBrightness = myClamp((ledBrightness+1*ledDirection), minBrightness, maxBrightness);
+    if (ledBrightness == maxBrightness) {
+        boundaryFlag = 1
+    } else if (ledBrightness == minBrightness) {
+        boundaryFlag = -1
+    } else {
+        boundaryFlag = 0;
+    }
+    alertFlag = !(!boundaryFlag);
 
-    LED_PWM_Apply(ledBrightness);}
+    LED_PWM_Apply(ledBrightness);
+}
 
 u16 LED_GetBrightness(void) {
     return ledBrightness;
@@ -128,7 +134,7 @@ void LED_ResetBoundaryFlag(void) {
     boundaryFlag = 0;
 }
 
-u8 LED_GetBoundaryFlag(void) {
+int8_t LED_GetBoundaryStatus(void) {
     return boundaryFlag;
 }
 
