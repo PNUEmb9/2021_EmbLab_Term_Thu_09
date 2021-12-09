@@ -19,7 +19,7 @@ void EXTI9_5_IRQHandler(void);
 void USART2_IRQHandler(void);
 void TIM2_IRQHandler(void);
 void USARTS_Init(void);
-void sendBoundaryMessage(char);
+void sendBoundaryMessage(int8_t);
 void sendPowerStatusMessage(char);
 void sendBrightnessMessage(void);
 
@@ -238,7 +238,9 @@ void EXTI3_IRQHandler(void) {
 void EXTI9_5_IRQHandler(void) {
     if (EXTI_GetITStatus(EXTI_Line7) != RESET) {
         if (GPIO_ReadInputDataBit(GPIOD, GPIO_Pin_7) != Bit_RESET) {
-            currentStatus = TOGGLE_POWER;
+            if(currentStatus == DEFAULT) {
+                currentStatus = TOGGLE_POWER;
+            }
         }
         EXTI_ClearITPendingBit(EXTI_Line7);
     }
@@ -271,7 +273,8 @@ void USART2_IRQHandler() {
                 if(fFlag == 1){
                     offFlag =1;
                     onFlag =0;
-                    oflag =0; fFlag =0;
+                    oFlag =0;
+                    fFlag =0;
                     currentStatus = TURN_OFF_POWER;
                 }
                 else{
@@ -291,17 +294,19 @@ void USART2_IRQHandler() {
 // LED 인터럽트에 넣기 
 void sendPowerStatusMessage(char powerStatus){
     char msg[50];
-    char powerMsg[] = (powerStatus == 1 ? "On" : "Off");
+    char * powerMsg = (powerStatus == 1 ? "On" : "Off");
     snprintf(msg,50,"LED turned %s\r\n", powerMsg);
+    char* pmsg = msg;
     while(*pmsg!=0){
         USART_SendData(USART2, *pmsg);
         pmsg++;
     } 
 }
-void sendBoundaryMessage(char boundaryStatus){
+void sendBoundaryMessage(int8_t boundaryStatus){
     char msg[50];
-    char boundaryMsg[] = (boundaryStatus == 0 ? "min" : "max");
+    char * boundaryMsg = (boundaryStatus == -1 ? "min" : "max");
     snprintf(msg,50,"LED reaches at %s brightness\r\n", boundaryMsg);
+    char* pmsg = msg;
     while(*pmsg!=0){
         USART_SendData(USART2, *pmsg);
         pmsg++;
@@ -323,7 +328,7 @@ int main(void)
 {   
     SystemInit();
     RCC_Configure();
-    GPIO_Configure();0
+    GPIO_Configure();
     USARTS_Init();
     TIM_Configure();
     EXTI_Configure();
@@ -338,11 +343,11 @@ int main(void)
             if (LED_GetPowerStatus() == 1) {
                 LED_Off();
                 sendPowerStatusMessage(0);
-                sendBrightnessMessage();
                 Delay(1000000);
             } else {
                 LED_On();
                 sendPowerStatusMessage(1);
+                sendBrightnessMessage();
                 Delay(1000000);
             }
             currentStatus = DEFAULT;

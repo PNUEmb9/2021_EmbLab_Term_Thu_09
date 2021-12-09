@@ -96,13 +96,13 @@ void LED_ChangeBrightness(void) {
     if(!LED_GetPowerStatus()) {return;}
     ledBrightness = myClamp((ledBrightness+1*ledDirection), minBrightness, maxBrightness);
     if (ledBrightness == maxBrightness) {
-        boundaryFlag = 1
+        boundaryStatus = 1;
     } else if (ledBrightness == minBrightness) {
-        boundaryFlag = -1
+        boundaryStatus = -1;
     } else {
-        boundaryFlag = 0;
+        boundaryStatus = 0;
     }
-    alertFlag = !(!boundaryFlag);
+    alertFlag = !(!boundaryStatus);
 
     LED_PWM_Apply(ledBrightness);
 }
@@ -131,11 +131,11 @@ int8_t LED_GetDirection(void) {
 }
 
 void LED_ResetBoundaryFlag(void) {
-    boundaryFlag = 0;
+    boundaryStatus = 0;
 }
 
 int8_t LED_GetBoundaryStatus(void) {
-    return boundaryFlag;
+    return boundaryStatus;
 }
 
 void LED_ResetAlertFlag(void) {

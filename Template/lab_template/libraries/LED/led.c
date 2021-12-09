@@ -1,5 +1,4 @@
 #include "led.h"
-#include "stdio.h"
 #include "stm32f10x.h"
 #include "stm32f10x_rcc.h"
 #include "stm32f10x_gpio.h"
@@ -13,7 +12,7 @@ static u16 minBrightness = 100;
 static int8_t ledDirection = 1;
 
 static volatile u8 powerFlag = 0;
-static volatile u8 boundaryFlag = 0;
+static volatile int8_t boundaryStatus = 0;
 static volatile u8 alertFlag = 0;
 static GPIO_InitTypeDef GPIO_InitStructure;
 static TIM_TimeBaseInitTypeDef TIM_TimeBaseStructure;
@@ -84,7 +83,6 @@ void LED_On(void) {
     TIM_ARRPreloadConfig(TIM3, ENABLE);
     TIM_Cmd(TIM3, ENABLE);
     powerFlag = 1;
-    printf("ON\n");
 }
 
 void LED_Off(void) {
@@ -92,14 +90,19 @@ void LED_Off(void) {
     LED_GPIO_Normal_Configure();
     GPIO_ResetBits(GPIOB,GPIO_Pin_0);
     powerFlag = 0;
-    printf("OFF\n");
 }
 
 void LED_ChangeBrightness(void) {
-    ledBrightness = (ledBrightness+1*ledDirection);
-    ledBrightness = myClamp(ledBrightness, minBrightness, maxBrightness);
-    boundaryFlag = !((ledBrightness - minBrightness) % (maxBrightness-minBrightness));
-    alertFlag = boundaryFlag;
+    if(!LED_GetPowerStatus()) {return;}
+    ledBrightness = myClamp((ledBrightness+1*ledDirection), minBrightness, maxBrightness);
+    if (ledBrightness == maxBrightness) {
+        boundaryStatus = 1;
+    } else if (ledBrightness == minBrightness) {
+        boundaryStatus = -1;
+    } else {
+        boundaryStatus = 0;
+    }
+    alertFlag = !(!boundaryStatus);
 
     LED_PWM_Apply(ledBrightness);
 }
@@ -113,6 +116,7 @@ u16 LED_GetBrightnessWithPercent(void) {
 }
 
 void LED_ToggleDirection(void) {
+    if(!LED_GetPowerStatus()) return;
     if(ledBrightness >= maxBrightness) {
         ledDirection = -1;
     } else if(ledBrightness <=minBrightness) {
@@ -127,11 +131,11 @@ int8_t LED_GetDirection(void) {
 }
 
 void LED_ResetBoundaryFlag(void) {
-    boundaryFlag = 0;
+    boundaryStatus = 0;
 }
 
-u8 LED_GetBoundaryFlag(void) {
-    return boundaryFlag;
+int8_t LED_GetBoundaryStatus(void) {
+    return boundaryStatus;
 }
 
 void LED_ResetAlertFlag(void) {
