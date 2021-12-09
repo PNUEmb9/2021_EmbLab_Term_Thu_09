@@ -14,6 +14,7 @@ void RCC_Configure(void);
 void GPIO_Configure(void);
 void NVIC_Configure(void);
 void TIM_Configure(void);
+void EXTI1_IRQHandler(void);
 void EXTI3_IRQHandler(void);
 void EXTI9_5_IRQHandler(void);
 void USART2_IRQHandler(void);
@@ -70,6 +71,12 @@ void RCC_Configure(void)
 void GPIO_Configure(void) // stm32f10x_gpio.h 참고
 {
     GPIO_InitTypeDef GPIO_InitStructure;
+    // Brightness touch sensor pin config / PD3
+    GPIO_InitStructure.GPIO_Pin = GPIO_Pin_1;
+    GPIO_InitStructure.GPIO_Mode = GPIO_Mode_IPU;
+    GPIO_InitStructure.GPIO_Speed = GPIO_Speed_50MHz;
+    GPIO_Init(GPIOD, &GPIO_InitStructure);
+    
     // Brightness touch sensor pin config / PD3
     GPIO_InitStructure.GPIO_Pin = GPIO_Pin_3;
     GPIO_InitStructure.GPIO_Mode = GPIO_Mode_IPU;
@@ -129,7 +136,15 @@ void EXTI_Configure(void) // stm32f10x_gpio.h 참고
 {
     EXTI_InitTypeDef EXTI_InitStructure;
 
-    /* Joystick Up */
+    /* Power Touch sensor interrupt */
+	GPIO_EXTILineConfig(GPIO_PortSourceGPIOD, GPIO_PinSource1);
+    EXTI_InitStructure.EXTI_Line = EXTI_Line1;
+    EXTI_InitStructure.EXTI_Mode = EXTI_Mode_Interrupt;
+    EXTI_InitStructure.EXTI_Trigger = EXTI_Trigger_Falling;
+    EXTI_InitStructure.EXTI_LineCmd = ENABLE;
+    EXTI_Init(&EXTI_InitStructure);
+    
+    /*  */
 	GPIO_EXTILineConfig(GPIO_PortSourceGPIOD, GPIO_PinSource3);
     EXTI_InitStructure.EXTI_Line = EXTI_Line3;
     EXTI_InitStructure.EXTI_Mode = EXTI_Mode_Interrupt;
@@ -212,6 +227,13 @@ void NVIC_Configure(void) { // misc.h 참고
     NVIC_InitStructure.NVIC_IRQChannelSubPriority = 0x0;
     NVIC_InitStructure.NVIC_IRQChannelCmd = ENABLE;
     NVIC_Init(&NVIC_InitStructure);
+
+    // Power Touch sensor
+    NVIC_InitStructure.NVIC_IRQChannel = EXTI1_IRQn;
+    NVIC_InitStructure.NVIC_IRQChannelPreemptionPriority = 0x4;
+    NVIC_InitStructure.NVIC_IRQChannelSubPriority = 0x0;
+    NVIC_InitStructure.NVIC_IRQChannelCmd = ENABLE;
+    NVIC_Init(&NVIC_InitStructure);
 }
 
 void TIM2_IRQHandler(void) {
@@ -221,6 +243,16 @@ void TIM2_IRQHandler(void) {
         }
         TIM_ClearITPendingBit(TIM2,TIM_IT_Update);
     }
+}
+
+// Power touch
+void EXTI3_IRQHandler(void) {
+    if (EXTI_GetITStatus(EXTI_Line1) != RESET) {
+		if (GPIO_ReadInputDataBit(GPIOD, GPIO_Pin_1) == Bit_RESET) {
+            currentStatus = TOGGLE_POWER;
+		}
+        EXTI_ClearITPendingBit(EXTI_Line3);
+	}
 }
 
 // Brightness touch
